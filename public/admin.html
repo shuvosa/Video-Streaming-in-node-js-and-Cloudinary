@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Video Panel</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the Inter font and overall look */
+        body {
+            font-family: "Inter", sans-serif; /* Set Inter font */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+        }
+        input[type="text"], input[type="file"], input[type="password"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        input[type="text"]:focus, input[type="file"]:focus, input[type="password"]:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out, box-shadow 0.2s ease-in-out;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary {
+            background-color: #4f46e5;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        .btn-danger {
+            background-color: #dc2626;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #b91c1c;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        .btn-secondary {
+            background-color: #6b7280;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        .message-box {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            font-weight: 500;
+            display: none; /* Hidden by default */
+        }
+        .message-box.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .message-box.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background-color: #f9fafb;
+            font-weight: 700;
+            color: #374151;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Could be responsive */
+            max-width: 500px;
+            border-radius: 0.75rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            position: relative; /* For close button positioning */
+        }
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 sm:p-8 flex justify-center items-start min-h-screen">
+    <div class="container bg-white rounded-2xl shadow-xl p-6 md:p-8 lg:p-10">
+
+        <h1 class="text-3xl font-extrabold text-indigo-700 mb-6 text-center border-b-2 border-indigo-500 pb-3">Admin Video Management</h1>
+
+        <!-- Login Section -->
+        <div id="loginSection" class="w-full max-w-md mx-auto p-6 bg-gray-50 rounded-lg shadow-inner">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Admin Login</h2>
+            <div class="form-group">
+                <h4 class="text-sm text-gray-600 mb-2"> Admin Passwor is : admin</h4>
+                <label for="adminPassword">Password:</label>
+                <input type="password" id="adminPassword" placeholder="Enter admin password" class="focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <button id="loginBtn" class="btn-primary w-full">Login</button>
+            <div id="loginMessage" class="message-box mt-4"></div>
+        </div>
+
+        <!-- Admin Dashboard Section (Hidden by default) -->
+        <div id="adminDashboard" class="hidden">
+            <div class="mb-8 p-6 bg-blue-50 rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold text-blue-700 mb-4">Upload New Video</h2>
+                <div class="form-group">
+                    <label for="videoTitle">Video Title:</label>
+                    <input type="text" id="videoTitle" placeholder="Enter video title" required class="focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="form-group">
+                    <label for="videoFile">Video File (Max 10MB):</label>
+                    <input type="file" id="videoFile" accept="video/*" required class="focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <button id="uploadBtn" class="btn-primary w-full">Upload Video</button>
+                <div id="uploadMessage" class="message-box"></div>
+            </div>
+
+            <div class="p-6 bg-gray-50 rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Manage Existing Videos</h2>
+                <div id="videoListTableContainer" class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">URL</th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="videoTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Video rows will be inserted here by JavaScript -->
+                            <tr><td colspan="4" class="text-center py-4 text-gray-500">Loading videos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="manageMessage" class="message-box"></div>
+            </div>
+            <div class="text-center mt-6">
+                <button id="logoutBtn" class="btn-secondary">Logout</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modals for editing and confirmation -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('editModal')">&times;</span>
+            <h3 class="text-xl font-bold mb-4">Edit Video Title</h3>
+            <input type="hidden" id="editVideoId">
+            <div class="form-group">
+                <label for="editVideoTitle">New Title:</label>
+                <input type="text" id="editVideoTitle" class="w-full p-2 border rounded">
+            </div>
+            <button id="saveEditBtn" class="btn-primary mt-4">Save Changes</button>
+        </div>
+    </div>
+
+    <div id="confirmDeleteModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('confirmDeleteModal')">&times;</span>
+            <h3 class="text-xl font-bold mb-4">Confirm Deletion</h3>
+            <p>Are you sure you want to delete this video? This action cannot be undone.</p>
+            <input type="hidden" id="deleteVideoId">
+            <div class="flex justify-center gap-4 mt-6">
+                <button id="confirmDeleteBtn" class="btn-danger">Delete</button>
+                <button id="cancelDeleteBtn" class="btn-secondary" onclick="closeModal('confirmDeleteModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const API_BASE_URL = ''; // Keep empty if running on the same domain/port, otherwise e.g., 'http://localhost:3000'
+
+        // DOM Elements
+        const loginSection = document.getElementById('loginSection');
+        const adminDashboard = document.getElementById('adminDashboard');
+        const adminPasswordInput = document.getElementById('adminPassword');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginMessage = document.getElementById('loginMessage');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        const videoTitleInput = document.getElementById('videoTitle');
+        const videoFileInput = document.getElementById('videoFile');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadMessage = document.getElementById('uploadMessage');
+
+        const videoTableBody = document.getElementById('videoTableBody');
+        const manageMessage = document.getElementById('manageMessage');
+
+        const editModal = document.getElementById('editModal');
+        const editVideoIdInput = document.getElementById('editVideoId');
+        const editVideoTitleInput = document.getElementById('editVideoTitle');
+        const saveEditBtn = document.getElementById('saveEditBtn');
+
+        const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+        const deleteVideoIdInput = document.getElementById('deleteVideoId');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        // const cancelDeleteBtn is already defined above
+
+        let adminSessionId = localStorage.getItem('adminSessionId') || null; // Retrieve session ID from localStorage
+
+        // --- Utility Functions ---
+
+        /**
+         * Displays a message in a designated message box.
+         * @param {HTMLElement} element - The DOM element to display the message in.
+         * @param {string} message - The message text.
+         * @param {'success'|'error'|'info'} type - The type of message for styling.
+         */
+        function showMessage(element, message, type = 'info') {
+            element.textContent = message;
+            element.className = `message-box ${type}`;
+            element.style.display = 'block';
+            setTimeout(() => {
+                element.style.display = 'none'; // Hide after 5 seconds
+            }, 5000);
+        }
+
+        /**
+         * Shows a modal dialog.
+         * @param {HTMLElement} modalElement - The modal DOM element to show.
+         */
+        function showModal(modalElement) {
+            modalElement.style.display = 'flex'; // Use flexbox to center the modal
+        }
+
+        /**
+         * Hides a modal dialog.
+         * @param {string} modalId - The ID of the modal DOM element to hide.
+         */
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // --- API Call Helper ---
+
+        /**
+         * Fetches data from the API, including the admin session header if available.
+         * @param {string} url - The API endpoint URL.
+         * @param {RequestInit} options - Fetch API options.
+         * @returns {Promise<Response>} The fetch response.
+         */
+        async function fetchWithAuth(url, options = {}) {
+            const headers = {
+                ...options.headers, // Preserve any existing headers
+            };
+            // Add admin session ID to requests if present
+            if (adminSessionId) {
+                headers['X-Admin-Session'] = adminSessionId;
+            }
+
+            // Ensure Content-Type is set for JSON bodies unless it's a FormData upload
+            if (options.body && typeof options.body === 'string' && !headers['Content-Type']) {
+                headers['Content-Type'] = 'application/json';
+            }
+
+            const response = await fetch(API_BASE_URL + url, {
+                ...options,
+                headers: headers,
+            });
+
+            // If a 403 Forbidden is received, assume session expired and log out
+            if (response.status === 403) {
+                showMessage(loginMessage, 'Admin session expired. Please log in again.', 'error');
+                hideAdminDashboard();
+                throw new Error('Admin session expired.');
+            }
+            return response;
+        }
+
+        // --- Admin Authentication Logic ---
+
+        /**
+         * Handles the admin login process.
+         */
+        async function handleLogin() {
+            const password = adminPasswordInput.value;
+            if (password === '') {
+                showMessage(loginMessage, 'Please enter password.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE_URL + '/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: password })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    adminSessionId = result.sessionId;
+                    localStorage.setItem('adminSessionId', adminSessionId); // Persist session ID
+                    showMessage(loginMessage, result.message, 'success');
+                    showAdminDashboard();
+                    fetchVideosForAdmin(); // Load videos immediately after login
+                } else {
+                    showMessage(loginMessage, result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showMessage(loginMessage, 'Network error during login. Please check server.', 'error');
+            }
+        }
+
+        /**
+         * Logs out the admin by clearing the session ID and hiding the dashboard.
+         */
+        function handleLogout() {
+            adminSessionId = null;
+            localStorage.removeItem('adminSessionId'); // Clear from localStorage
+            hideAdminDashboard();
+            showMessage(loginMessage, 'Logged out successfully.', 'info');
+        }
+
+        /**
+         * Shows the admin dashboard and hides the login section.
+         */
+        function showAdminDashboard() {
+            loginSection.classList.add('hidden');
+            adminDashboard.classList.remove('hidden');
+        }
+
+        /**
+         * Hides the admin dashboard and shows the login section.
+         * Clears password input.
+         */
+        function hideAdminDashboard() {
+            loginSection.classList.remove('hidden');
+            adminDashboard.classList.add('hidden');
+            adminPasswordInput.value = ''; // Clear password field
+        }
+
+        // --- Video Management API Calls ---
+
+        /**
+         * Fetches and renders the list of videos in the admin table.
+         */
+        async function fetchVideosForAdmin() {
+            try {
+                // Fetch from the public /videos endpoint to list them, but auth is for actions
+                const response = await fetchWithAuth('/videos', {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                renderVideoTable(data);
+            } catch (error) {
+                console.error('Error fetching videos for admin:', error);
+                // Only show error if not related to auth failure already handled
+                if (!error.message.includes('Admin session expired')) {
+                    showMessage(manageMessage, 'Failed to load videos. Please try logging in again.', 'error');
+                }
+            }
+        }
+
+        /**
+         * Handles the video upload process.
+         */
+        async function handleUploadVideo() {
+            const title = videoTitleInput.value.trim();
+            const file = videoFileInput.files[0];
+
+            if (!title) {
+                showMessage(uploadMessage, 'Please provide a video title.', 'error');
+                return;
+            }
+            if (!file) {
+                showMessage(uploadMessage, 'Please select a video file.', 'error');
+                return;
+            }
+
+            // Client-side file size check (server-side check is also crucial)
+            if (file.size > 10 * 1024 * 1024) { // 10MB
+                showMessage(uploadMessage, 'File size exceeds 10MB limit.', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('videoTitle', title); // Key must match server's expected field
+            formData.append('videoFile', file);   // Key must match server's expected field
+
+            try {
+                // When using FormData, let the browser set the 'Content-Type' header
+                const response = await fetchWithAuth('/admin/upload', {
+                    method: 'POST',
+                    body: formData,
+                    // DO NOT manually set 'Content-Type': 'multipart/form-data'; browser handles it
+                });
+
+                const result = await response.json(); // Attempt to parse JSON response
+
+                if (response.ok) {
+                    showMessage(uploadMessage, result.message, 'success');
+                    videoTitleInput.value = ''; // Clear form inputs
+                    videoFileInput.value = '';
+                    fetchVideosForAdmin(); // Refresh the video list table
+                } else {
+                    showMessage(uploadMessage, result.message || 'An unknown error occurred.', 'error');
+                }
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                showMessage(uploadMessage, 'Network error during upload or unexpected response.', 'error');
+            }
+        }
+
+        /**
+         * Handles saving the updated video title.
+         */
+        async function handleUpdateTitle() {
+            const videoId = editVideoIdInput.value;
+            const newTitle = editVideoTitleInput.value.trim();
+
+            if (!newTitle) {
+                showMessage(manageMessage, 'Video title cannot be empty.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetchWithAuth(`/admin/videos/${videoId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: newTitle })
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage(manageMessage, result.message, 'success');
+                    closeModal('editModal'); // Close the modal
+                    fetchVideosForAdmin(); // Refresh the list
+                } else {
+                    showMessage(manageMessage, result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Update title error:', error);
+                showMessage(manageMessage, 'Network error during title update.', 'error');
+            }
+        }
+
+        /**
+         * Handles deleting a video.
+         */
+        async function handleDeleteVideo() {
+            const videoId = deleteVideoIdInput.value; // Get the ID from the hidden input in the modal
+
+            try {
+                const response = await fetchWithAuth(`/admin/videos/${videoId}`, {
+                    method: 'DELETE',
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage(manageMessage, result.message, 'success');
+                    closeModal('confirmDeleteModal'); // Close the modal
+                    fetchVideosForAdmin(); // Refresh the list
+                } else {
+                    showMessage(manageMessage, result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Delete video error:', error);
+                showMessage(manageMessage, 'Network error during video deletion.', 'error');
+            }
+        }
+
+        // --- Render Functions ---
+
+        /**
+         * Renders the video list into the HTML table.
+         * @param {Array<Object>} videos - An array of video objects.
+         */
+        function renderVideoTable(videos) {
+            videoTableBody.innerHTML = ''; // Clear existing rows
+            if (videos.length === 0) {
+                videoTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No videos found. Upload one!</td></tr>`;
+                return;
+            }
+
+            videos.forEach(video => {
+                const row = videoTableBody.insertRow();
+                row.className = 'hover:bg-gray-50'; // Tailwind hover effect
+
+                // ID Cell (truncated for display, full ID on hover)
+                const idCell = row.insertCell();
+                idCell.className = 'px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 truncate max-w-xs';
+                idCell.textContent = video.id;
+                idCell.title = video.id;
+
+                // Title Cell
+                const titleCell = row.insertCell();
+                titleCell.className = 'px-6 py-4 text-sm text-gray-700';
+                titleCell.textContent = video.title;
+
+                // URL Cell (truncated for display, full URL on hover, clickable)
+                const urlCell = row.insertCell();
+                urlCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-blue-600 truncate max-w-xs';
+                const urlLink = document.createElement('a');
+                urlLink.href = video.url;
+                urlLink.target = '_blank'; // Open in new tab
+                urlLink.textContent = video.url;
+                urlLink.title = video.url;
+                urlCell.appendChild(urlLink);
+
+                // Actions Cell (Edit and Delete buttons)
+                const actionsCell = row.insertCell();
+                actionsCell.className = 'px-6 py-4 whitespace-nowrap text-sm font-medium';
+
+                const editBtn = document.createElement('button');
+                editBtn.textContent = 'Edit Title';
+                editBtn.className = 'btn-secondary mr-2'; // Tailwind classes
+                editBtn.onclick = () => {
+                    editVideoIdInput.value = video.id;
+                    editVideoTitleInput.value = video.title;
+                    showModal(editModal);
+                };
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.className = 'btn-danger'; // Tailwind classes
+                deleteBtn.onclick = () => {
+                    deleteVideoIdInput.value = video.id;
+                    showModal(confirmDeleteModal);
+                };
+
+                actionsCell.appendChild(editBtn);
+                actionsCell.appendChild(deleteBtn);
+            });
+        }
+
+
+        // --- Event Listeners ---
+        loginBtn.addEventListener('click', handleLogin);
+        // Allow pressing Enter key to login
+        adminPasswordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleLogin();
+            }
+        });
+        logoutBtn.addEventListener('click', handleLogout);
+        uploadBtn.addEventListener('click', handleUploadVideo);
+        saveEditBtn.addEventListener('click', handleUpdateTitle);
+        confirmDeleteBtn.addEventListener('click', handleDeleteVideo);
+
+
+        // --- Initial Load Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if a valid session ID exists from previous visit (basic persistence)
+            // In a real app, you'd send this ID to the server for validation
+            if (adminSessionId) {
+                showAdminDashboard();
+                fetchVideosForAdmin(); // Attempt to load videos if session exists
+            } else {
+                hideAdminDashboard(); // Show login form
+            }
+        });
+
+        // Close modals if clicked outside (event delegation for efficiency)
+        window.onclick = function(event) {
+            if (event.target == editModal) {
+                closeModal('editModal');
+            }
+            if (event.target == confirmDeleteModal) {
+                closeModal('confirmDeleteModal');
+            }
+        };
+
+    </script>
+</body>
+</html>

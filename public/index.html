@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Streamer</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the Inter font and overall look */
+        body {
+            font-family: "Inter", sans-serif; /* Set Inter font */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-color: #f0f2f5; /* Light gray background */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align items to the top for better content flow */
+            min-height: 100vh;
+            padding: 20px; /* Padding around the main content */
+        }
+        .container {
+            max-width: 1200px; /* Max width for the container */
+            width: 100%;
+            background-color: #ffffff; /* White background for content area */
+            border-radius: 1rem; /* Rounded corners */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); /* Subtle shadow */
+            overflow: hidden; /* Ensure inner elements respect border-radius */
+            display: flex; /* Use flexbox for main layout */
+            flex-direction: column; /* Column direction on small screens */
+            gap: 20px; /* Gap between sections */
+            padding: 20px;
+        }
+        @media (min-width: 768px) { /* Medium screens and up */
+            .container {
+                flex-direction: row; /* Row direction on larger screens */
+                padding: 30px;
+            }
+        }
+        .main-video-player {
+            flex: 2; /* Takes more space */
+            min-width: 0; /* Allow shrinking */
+            position: relative; /* For aspect ratio */
+            background-color: #000; /* Black background for video player */
+            border-radius: 0.75rem; /* Rounded corners for video player */
+            overflow: hidden; /* Hide any overflow from video */
+        }
+        .main-video-player video {
+            width: 100%;
+            height: auto; /* Maintain aspect ratio */
+            display: block;
+            border-radius: 0.75rem;
+        }
+        .video-list-container {
+            flex: 1; /* Takes less space */
+            min-width: 280px; /* Minimum width for the sidebar */
+            max-height: 70vh; /* Limit height to enable scrolling */
+            overflow-y: auto; /* Enable vertical scrolling */
+            background-color: #f9fafb; /* Lighter background for the list */
+            border-radius: 0.75rem;
+            padding: 15px;
+        }
+        .video-item {
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            margin-bottom: 15px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .video-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .video-item-thumbnail {
+            width: 100%;
+            height: 120px; /* Fixed height for thumbnails */
+            object-fit: cover; /* Cover the area */
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        /* Custom scrollbar styles */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 sm:p-8 md:p-10 flex flex-col items-center min-h-screen">
+    <div class="container bg-white rounded-2xl shadow-xl p-6 md:p-8 lg:p-10 flex flex-col md:flex-row gap-6 md:gap-8 lg:gap-10">
+
+        <!-- Main Video Player Section -->
+        <div class="main-video-player flex-grow md:flex-grow-2 relative overflow-hidden rounded-xl bg-black aspect-video">
+            <video id="mainVideoPlayer" controls autoplay class="w-full h-full object-contain rounded-xl">
+                <!-- Placeholder source for initial load. This will be replaced by fetched videos. -->
+                <source src="" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div id="loadingIndicator" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75 text-white text-lg font-semibold hidden">
+                Loading video...
+            </div>
+        </div>
+
+        <!-- Video List Section (Sidebar) -->
+        <div class="video-list-container flex-shrink-0 w-full md:w-80 lg:w-96 p-4 bg-gray-50 rounded-xl shadow-inner custom-scrollbar">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">Explore Videos</h2>
+            <div id="videoList" class="space-y-4">
+                <!-- Video items will be loaded here by JavaScript -->
+                <div class="text-center text-gray-500 py-4" id="noVideosMessage" style="display: none;">No videos available.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Set API_BASE_URL to your Node.js server address
+        const API_BASE_URL = 'http://localhost:3000';
+        const mainVideoPlayer = document.getElementById('mainVideoPlayer');
+        const videoListDiv = document.getElementById('videoList');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const noVideosMessage = document.getElementById('noVideosMessage');
+
+        let currentVideos = []; // To store the fetched video list
+
+        /**
+         * Loads a video into the main player and attempts to play it.
+         * Shows a loading indicator during the process.
+         * @param {string} videoUrl - The URL of the video to load.
+         */
+        function loadAndPlayVideo(videoUrl) {
+            loadingIndicator.classList.remove('hidden'); // Show loading indicator
+            mainVideoPlayer.src = videoUrl;
+            mainVideoPlayer.load(); // Load the new video source
+
+            // Attempt to play the video. Autoplay policies might prevent immediate play.
+            mainVideoPlayer.play()
+                .then(() => {
+                    loadingIndicator.classList.add('hidden'); // Hide loading indicator on play
+                    console.log('Video started playing');
+                })
+                .catch(error => {
+                    loadingIndicator.classList.add('hidden'); // Hide loading indicator even if play failed
+                    console.error('Error playing video:', error);
+                    // Inform user if autoplay failed (e.g., browser policy)
+                    // You might want to display a play button here for user interaction
+                });
+        }
+
+        /**
+         * Populates the video list sidebar with fetched video data.
+         */
+        function populateVideoList() {
+            videoListDiv.innerHTML = ''; // Clear existing list items
+            if (currentVideos.length === 0) {
+                noVideosMessage.style.display = 'block';
+                return;
+            } else {
+                noVideosMessage.style.display = 'none';
+            }
+
+            currentVideos.forEach(video => {
+                const videoItem = document.createElement('div');
+                videoItem.className = 'video-item group p-3 rounded-lg shadow-md flex items-center space-x-4 bg-white hover:bg-indigo-50 transition duration-300 ease-in-out';
+                videoItem.dataset.url = video.url; // Store URL for easy access
+
+                videoItem.innerHTML = `
+                    <img src="${video.thumbnail}" onerror="this.onerror=null;this.src='https://placehold.co/100x70/E0E7FF/4F46E5?text=No+Thumb';" alt="${video.title}" class="video-item-thumbnail w-24 h-16 object-cover rounded-md flex-shrink-0 border border-gray-200">
+                    <div class="flex-grow">
+                        <h3 class="text-base font-semibold text-gray-800 group-hover:text-indigo-700 leading-tight">${video.title}</h3>
+                    </div>
+                `;
+
+                // Add click listener to load and play the video when an item is clicked
+                videoItem.addEventListener('click', () => {
+                    loadAndPlayVideo(video.url);
+                });
+                videoListDiv.appendChild(videoItem);
+            });
+        }
+
+        /**
+         * Fetches the list of videos from the backend API.
+         */
+        async function fetchAndRenderVideos() {
+            try {
+                const response = await fetch(API_BASE_URL + '/videos');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const fetchedVideos = await response.json();
+                currentVideos = fetchedVideos; // Update the global video list
+
+                populateVideoList(); // Re-render the sidebar list
+
+                // Automatically load and play the first video if available and no video is currently playing
+                if (currentVideos.length > 0 && (!mainVideoPlayer.src || mainVideoPlayer.paused)) {
+                    loadAndPlayVideo(currentVideos[0].url);
+                } else if (currentVideos.length === 0) {
+                    // If no videos are available, clear the player and hide loading
+                    mainVideoPlayer.src = '';
+                    mainVideoPlayer.pause();
+                    loadingIndicator.classList.add('hidden');
+                }
+
+            } catch (error) {
+                console.error('Error fetching videos:', error);
+                loadingIndicator.classList.add('hidden'); // Hide loading if fetch fails
+                noVideosMessage.textContent = 'Failed to load videos. Please try again later.';
+                noVideosMessage.style.display = 'block';
+            }
+        }
+
+        // --- Event Listeners for Video Player Status ---
+
+        // Hide loading indicator when video is ready to play through without buffering
+        mainVideoPlayer.addEventListener('canplaythrough', () => {
+            loadingIndicator.classList.add('hidden');
+        });
+
+        // Show loading indicator when video is buffering
+        mainVideoPlayer.addEventListener('waiting', () => {
+            loadingIndicator.classList.remove('hidden');
+        });
+
+        // Handle errors during video loading/playback
+        mainVideoPlayer.addEventListener('error', (e) => {
+            loadingIndicator.classList.add('hidden');
+            console.error('Video playback error:', e);
+            // Example: Display a user-friendly error message within the player area
+            // alert('Failed to play video. It might be unavailable or corrupted.'); // Replaced with console log
+        });
+
+        // --- Initial Load ---
+        // Fetch videos and set up the page when the DOM is fully loaded.
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAndRenderVideos();
+            // Optionally, refresh video list periodically for real-time updates
+            // setInterval(fetchAndRenderVideos, 10000); // Fetch every 10 seconds (adjust as needed)
+        });
+    </script>
+</body>
+</html>
